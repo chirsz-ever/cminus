@@ -1,85 +1,80 @@
 use crate::lexer::{Location, Token};
-use std::string::ToString;
 
 #[derive(Clone)]
 pub struct ASTNode {
-    pub name: String,
+    pub ident: ASTNodeIdent,
     pub location: Location,
     pub children: Option<Vec<ASTNode>>,
-    pub token: Option<Token>,
+}
+
+#[derive(Clone)]
+pub enum ASTNodeIdent {
+    Name(&'static str),
+    Token(Token),
 }
 
 impl ASTNode {
     pub fn empty() -> ASTNode {
         ASTNode {
-            name: String::new(),
+            ident: ASTNodeIdent::Name(""),
             location: Location::default(),
             children: None,
-            token: None,
         }
     }
 
-    pub fn node(name: &str, children: Vec<ASTNode>) -> ASTNode {
+    pub fn node(name: &'static str, children: Vec<ASTNode>) -> ASTNode {
         ASTNode {
-            name: name.to_string(),
+            ident: ASTNodeIdent::Name(name),
             location: children[0].location.clone(),
             children: Some(children),
-            token: None,
         }
     }
 
     pub fn keyword(token: Token, location: Location) -> ASTNode {
-        let name = format!("{:?}", token);
         ASTNode {
-            name,
+            ident: ASTNodeIdent::Token(token),
             location,
             children: None,
-            token: Some(token),
         }
     }
 
     pub fn ident(ident: String, location: Location) -> ASTNode {
         ASTNode {
-            name: "ID".to_string(),
+            ident: ASTNodeIdent::Token(Token::ID(ident)),
             location,
             children: None,
-            token: Some(Token::ID(ident)),
         }
     }
 
     pub fn type_name(type_name: String, location: Location) -> ASTNode {
         ASTNode {
-            name: "TYPE".to_string(),
+            ident: ASTNodeIdent::Token(Token::TYPE(type_name)),
             location,
             children: None,
-            token: Some(Token::TYPE(type_name)),
         }
     }
 
     pub fn int(value: i32, location: Location) -> ASTNode {
         ASTNode {
-            name: "INT".to_string(),
+            ident: ASTNodeIdent::Token(Token::INT(value)),
             location,
             children: None,
-            token: Some(Token::INT(value)),
         }
     }
 
     pub fn float(value: f32, location: Location) -> ASTNode {
         ASTNode {
-            name: "FLOAT".to_string(),
+            ident: ASTNodeIdent::Token(Token::FLOAT(value)),
             location,
             children: None,
-            token: Some(Token::FLOAT(value)),
         }
     }
 
     pub fn relop(relop: String, location: Location) -> ASTNode {
         ASTNode {
-            name: "RELOP".to_string(),
+            ident: ASTNodeIdent::Token(Token::RELOP(relop)),
             location,
             children: None,
-            token: Some(Token::RELOP(relop)),
         }
     }
 }

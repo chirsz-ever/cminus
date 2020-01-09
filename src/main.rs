@@ -6,6 +6,7 @@ mod lexer;
 lalrpop_mod!(parser);
 
 use lexer::*;
+use ast::*;
 use parser::ProgramParser;
 use std::env;
 use std::fs;
@@ -18,16 +19,12 @@ fn main() {
     print_ast(&ast, 0);
 }
 
-fn print_ast(ast: &ast::ASTNode, indent: usize) {
-    if ast.name.is_empty() {
-        return;
-    }
-
+fn print_ast(ast: &ASTNode, indent: usize) {
     let next_indent = indent + 2;
     let line_num = ast.location.line;
 
-    match &ast.token {
-        Some(token) => {
+    match &ast.ident {
+        ASTNodeIdent::Token(token) => {
             print_indent(indent);
             match token {
                 Token::ID(id) => {
@@ -50,16 +47,19 @@ fn print_ast(ast: &ast::ASTNode, indent: usize) {
                 }
             }
         }
-        None => {
+        ASTNodeIdent::Name("") => return,
+        ASTNodeIdent::Name(name) => {
             let children = ast.children.as_ref().unwrap();
-            if children.len() == 1 && &ast.name == "Exp" && &children[0].name == "Exp" {
-                print_ast(&children[0], indent);
-            } else {
-                print_indent(indent);
-                println!("{} ({})", ast.name, line_num);
-                for pat in children {
-                    print_ast(pat, next_indent);
+            if children.len() == 1 && name == &"Exp" {
+                if let ASTNodeIdent::Name("Exp") = children[0].ident {
+                    print_ast(&children[0], indent);
+                    return;
                 }
+            }
+            print_indent(indent);
+            println!("{} ({})", name, line_num);
+            for pat in children {
+                print_ast(pat, next_indent);
             }
         }
     }
