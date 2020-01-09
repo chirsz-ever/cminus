@@ -1,0 +1,289 @@
+use crate::lexer;
+use crate::ast::ASTNode;
+
+grammar;
+
+// High-level Definitions 
+
+pub Program: ASTNode = <ExtDefList> EOI => ASTNode::node("Program", vec![<>]);
+
+ExtDefList: ASTNode = {
+    ExtDef ExtDefList => ASTNode::node("ExtDefList", vec![<>]),
+        => ASTNode::empty(),
+};
+
+ExtDef: ASTNode = {
+    Specifier ExtDecList SEMI => ASTNode::node("ExtDef", vec![<>]),
+    Specifier SEMI => ASTNode::node("ExtDef", vec![<>]),
+    Specifier FunDec CompSt => ASTNode::node("ExtDef", vec![<>]),
+};
+
+ExtDecList: ASTNode = {
+    VarDec => ASTNode::node("ExtDecList", vec![<>]),
+    VarDec COMMA ExtDecList => ASTNode::node("ExtDecList", vec![<>]),
+};
+
+// Specifiers 
+
+Specifier: ASTNode = {
+    TYPE            => ASTNode::node("Specifier", vec![<>]),
+    StructSpecifier => ASTNode::node("Specifier", vec![<>]),
+};
+
+StructSpecifier: ASTNode = {
+    STRUCT OptTag LC DefList RC => ASTNode::node("StructSpecifier", vec![<>]),
+    STRUCT Tag                  => ASTNode::node("StructSpecifier", vec![<>]),
+};
+
+OptTag: ASTNode = {
+    ID => ASTNode::node("OptTag", vec![<>]),
+        => ASTNode::empty(),
+};
+
+Tag: ASTNode = ID => ASTNode::node("Tag", vec![<>]);
+
+//  Declarators 
+
+VarDec: ASTNode = {
+    ID                => ASTNode::node("VarDec", vec![<>]),
+    VarDec LB INT RB  => ASTNode::node("VarDec", vec![<>]),
+};
+
+FunDec: ASTNode = {
+    ID LP VarList RP  => ASTNode::node("FunDec", vec![<>]),
+    ID LP RP          => ASTNode::node("FunDec", vec![<>]),
+};
+
+VarList: ASTNode = {
+    ParamDec COMMA VarList => ASTNode::node("VarList", vec![<>]),
+    ParamDec               => ASTNode::node("VarList", vec![<>]),
+};
+
+ParamDec: ASTNode = Specifier VarDec => ASTNode::node("ParamDec", vec![<>]);
+
+//  Statements 
+
+CompSt: ASTNode = LC DefList StmtList RC => ASTNode::node("CompSt", vec![<>]);
+
+StmtList: ASTNode = {
+    Stmt StmtList => ASTNode::node("StmtList", vec![<>]),
+                           => ASTNode::empty(),
+}
+
+Stmt = { MatchedStmt, OpenStmt };
+
+MatchedStmt: ASTNode = {
+    Exp SEMI                                  => ASTNode::node("Stmt", vec![<>]),
+    CompSt                                    => ASTNode::node("Stmt", vec![<>]),
+    RETURN Exp SEMI                           => ASTNode::node("Stmt", vec![<>]),
+    WHILE LP Exp RP MatchedStmt               => ASTNode::node("Stmt", vec![<>]),
+    IF LP Exp RP MatchedStmt ELSE MatchedStmt => ASTNode::node("Stmt", vec![<>]),
+};
+
+OpenStmt: ASTNode = {
+    WHILE LP Exp RP OpenStmt               => ASTNode::node("Stmt", vec![<>]),
+    IF LP Exp RP Stmt                      => ASTNode::node("Stmt", vec![<>]),
+    IF LP Exp RP MatchedStmt ELSE OpenStmt => ASTNode::node("Stmt", vec![<>]),
+}
+
+// Stmt: ASTNode = {
+//     Exp SEMI                        => ASTNode::node("Stmt", vec![<>]),
+//     CompSt                          => ASTNode::node("Stmt", vec![<>]),
+//     RETURN Exp SEMI                 => ASTNode::node("Stmt", vec![<>]),
+//     IF LP Exp RP Stmt ELSE Stmt     => ASTNode::node("Stmt", vec![<>]),
+//     IF LP Exp RP Stmt               => ASTNode::node("Stmt", vec![<>]),
+//     WHILE LP Exp RP Stmt            => ASTNode::node("Stmt", vec![<>]),
+// };
+
+// Local Definitions 
+
+DefList: ASTNode = {
+    Def DefList => ASTNode::node("DefList", vec![<>]),
+                         => ASTNode::empty(),
+};
+
+Def: ASTNode = Specifier DecList SEMI => ASTNode::node("Def", vec![<>]);
+
+DecList: ASTNode = {
+    Dec                      => ASTNode::node("DecList", vec![<>]),
+    Dec COMMA DecList        => ASTNode::node("DecList", vec![<>]),
+}
+
+Dec: ASTNode = {
+    VarDec                   => ASTNode::node("Dec", vec![<>]),
+    VarDec ASSIGNOP Exp      => ASTNode::node("Dec", vec![<>]),
+}
+
+// Expressions 
+
+// Exp  =  { MINUS ~ Exp
+//         | NOT ~ Exp
+//         | LP ~ Exp ~ RP
+//         | ID ~ LP ~ Args? ~ RP
+//         | ID
+//         | FLOAT
+//         | INT
+//         | Exp ~ ASSIGNOP ~ Exp
+//         | Exp ~ AND ~ Exp
+//         | Exp ~ OR ~ Exp
+//         | Exp ~ RELOP ~ Exp
+//         | Exp ~ PLUS ~ Exp
+//         | Exp ~ MINUS ~ Exp
+//         | Exp ~ STAR ~ Exp
+//         | Exp ~ DIV ~ Exp
+//         | Exp ~ LB ~ Exp ~ RB
+//         | Exp ~ DOT ~ ID
+//         }
+
+Exp: ASTNode = { 
+    LogicOrExp ASSIGNOP Exp => ASTNode::node("Exp", vec![<>]),
+    LogicOrExp              => ASTNode::node("Exp", vec![<>]),
+};
+
+LogicOrExp: ASTNode = { 
+    LogicOrExp OR LogicAndExp => ASTNode::node("Exp", vec![<>]),
+    LogicAndExp => ASTNode::node("Exp", vec![<>]),
+};
+
+LogicAndExp: ASTNode = { 
+    LogicAndExp AND RelExp => ASTNode::node("Exp", vec![<>]),
+    RelExp => ASTNode::node("Exp", vec![<>]),
+};
+
+RelExp: ASTNode = { 
+    RelExp RELOP ArithExp => ASTNode::node("Exp", vec![<>]),
+    ArithExp => ASTNode::node("Exp", vec![<>]),
+};
+
+ArithExp: ASTNode = { 
+    ArithExp ArithOp TermExp => ASTNode::node("Exp", vec![<>]),
+    TermExp => ASTNode::node("Exp", vec![<>]),
+};
+
+ArithOp = { PLUS, MINUS };
+
+TermExp: ASTNode = { 
+    TermExp TermOp FactorExp => ASTNode::node("Exp", vec![<>]),
+    FactorExp => ASTNode::node("Exp", vec![<>]),
+};
+
+TermOp = { STAR, DIV };
+
+FactorExp: ASTNode = {
+    MINUS FactorExp => ASTNode::node("Exp", vec![<>]),
+    NOT FactorExp   => ASTNode::node("Exp", vec![<>]),
+    AtomExp         => ASTNode::node("Exp", vec![<>]),
+};
+
+AtomExp: ASTNode = {
+    Atom,
+    AtomExp LP RP      => ASTNode::node("Exp", vec![<>]),
+    AtomExp LP Args RP => ASTNode::node("Exp", vec![<>]),
+    AtomExp LB Exp RB  => ASTNode::node("Exp", vec![<>]),
+    AtomExp DOT ID     => ASTNode::node("Exp", vec![<>]),
+};
+
+Atom: ASTNode = {
+    ID             => ASTNode::node("Exp", vec![<>]),
+    INT            => ASTNode::node("Exp", vec![<>]),
+    FLOAT          => ASTNode::node("Exp", vec![<>]),
+    LP Exp RP      => ASTNode::node("Exp", vec![<>]),
+}
+
+Args: ASTNode = {
+    Exp COMMA Args => ASTNode::node("Args", vec![<>]),
+    Exp            => ASTNode::node("Args", vec![<>]),
+};
+
+
+// Tokens 
+
+SEMI: ASTNode = <loc:@L> ";" => ASTNode::keyword(lexer::Token::SEMI, loc);
+
+COMMA: ASTNode = <loc:@L> "," => ASTNode::keyword(lexer::Token::COMMA, loc);
+
+ASSIGNOP: ASTNode = <loc:@L> "=" => ASTNode::keyword(lexer::Token::ASSIGNOP, loc);
+
+RELOP: ASTNode = <loc:@L> <relop:RelopToken> => ASTNode::relop(relop, loc);
+
+PLUS: ASTNode = <loc:@L> "+" => ASTNode::keyword(lexer::Token::PLUS, loc);
+
+MINUS: ASTNode = <loc:@L> "-" => ASTNode::keyword(lexer::Token::MINUS, loc);
+
+STAR: ASTNode = <loc:@L> "*" => ASTNode::keyword(lexer::Token::STAR, loc);
+
+DIV: ASTNode = <loc:@L> "/" => ASTNode::keyword(lexer::Token::DIV, loc);
+
+AND: ASTNode = <loc:@L> "&&" => ASTNode::keyword(lexer::Token::AND, loc);
+
+OR: ASTNode = <loc:@L> "||" => ASTNode::keyword(lexer::Token::OR, loc);
+
+DOT: ASTNode = <loc:@L> "." => ASTNode::keyword(lexer::Token::DOT, loc);
+
+NOT: ASTNode = <loc:@L> "!" => ASTNode::keyword(lexer::Token::NOT, loc);
+
+LP: ASTNode = <loc:@L> "(" => ASTNode::keyword(lexer::Token::LP, loc);
+
+RP: ASTNode = <loc:@L> ")" => ASTNode::keyword(lexer::Token::RP, loc);
+
+LB: ASTNode = <loc:@L> "[" => ASTNode::keyword(lexer::Token::LB, loc);
+
+RB: ASTNode = <loc:@L> "]" => ASTNode::keyword(lexer::Token::RB, loc);
+
+LC: ASTNode = <loc:@L> "{" => ASTNode::keyword(lexer::Token::LC, loc);
+
+RC: ASTNode = <loc:@L> "}" => ASTNode::keyword(lexer::Token::RC, loc);
+
+STRUCT: ASTNode = <loc:@L> "struct" => ASTNode::keyword(lexer::Token::STRUCT, loc);
+
+RETURN: ASTNode = <loc:@L> "return" => ASTNode::keyword(lexer::Token::RETURN, loc);
+
+IF: ASTNode = <loc:@L> "if" => ASTNode::keyword(lexer::Token::IF, loc);
+
+ELSE: ASTNode = <loc:@L> "else" => ASTNode::keyword(lexer::Token::ELSE, loc);
+
+WHILE: ASTNode = <loc:@L> "while" => ASTNode::keyword(lexer::Token::WHILE, loc);
+
+TYPE: ASTNode = <loc:@L> <tt:TypeToken> => ASTNode::type_name(tt, loc);
+
+ID: ASTNode = <loc:@L> <id:IdToken> => ASTNode::ident(id, loc);
+
+INT: ASTNode = <loc:@L> <val:IntLit> => ASTNode::int(val, loc);
+
+FLOAT: ASTNode = <loc:@L> <val:FloatLit> => ASTNode::float(val, loc);
+
+extern {
+    type Location = lexer::Location;
+    type Error = lexer::LexicalError;
+    
+    enum lexer::Token {
+        ";" => lexer::Token::SEMI,
+        "," => lexer::Token::COMMA,
+        "=" => lexer::Token::ASSIGNOP,
+        RelopToken => lexer::Token::RELOP(<String>),
+        "+" => lexer::Token::PLUS,
+        "-" => lexer::Token::MINUS,
+        "*" => lexer::Token::STAR,
+        "/" => lexer::Token::DIV,
+        "&&" => lexer::Token::AND,
+        "||" => lexer::Token::OR,
+        "." => lexer::Token::DOT,
+        "!" => lexer::Token::NOT,
+        TypeToken => lexer::Token::TYPE(<String>),
+        "(" => lexer::Token::LP,
+        ")" => lexer::Token::RP,
+        "[" => lexer::Token::LB,
+        "]" => lexer::Token::RB,
+        "{" => lexer::Token::LC,
+        "}" => lexer::Token::RC,
+        "struct" => lexer::Token::STRUCT,
+        "return" => lexer::Token::RETURN,
+        "if" => lexer::Token::IF,
+        "else" => lexer::Token::ELSE,
+        "while" => lexer::Token::WHILE,
+        IdToken => lexer::Token::ID(<String>),
+        IntLit => lexer::Token::INT(<i32>),
+        FloatLit => lexer::Token::FLOAT(<f32>),
+        EOI => lexer::Token::EOI,
+    }
+}
