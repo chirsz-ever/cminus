@@ -309,5 +309,7 @@ extern {
         FloatLit => lexer::Token::FLOAT(<f32>),
         EOI => lexer::Token::EOI,
         UnknownChar => lexer::Token::UnknownChar(<char>),
+        IllegalOct => lexer::Token::IllegalOct(<String>),
+        IllegalHex => lexer::Token::IllegalHex(<String>),
     }
 }

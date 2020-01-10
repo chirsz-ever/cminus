@@ -106,8 +106,26 @@ fn println_err(e: &ParseError<lexer::Location, lexer::Token, lexer::LexicalError
             expected: _,
         } => {
             println!(
-                "Error type A at Line {}: Unknown Char `{}`.",
+                "Error type A at Line {}: Mysterious character '{}'.",
                 location.line, c
+            );
+        }
+        UnrecognizedToken {
+            token: (location, Token::IllegalOct(ill), _),
+            expected: _,
+        } => {
+            println!(
+                "Error type A at Line {}: Illegal octal number '{}'.",
+                location.line, ill
+            );
+        }
+        UnrecognizedToken {
+            token: (location, Token::IllegalHex(ill), _),
+            expected: _,
+        } => {
+            println!(
+                "Error type A at Line {}: Illegal hexadecimal number '{}'.",
+                location.line, ill
             );
         }
         UnrecognizedToken {
@@ -115,7 +133,7 @@ fn println_err(e: &ParseError<lexer::Location, lexer::Token, lexer::LexicalError
             expected: _,
         } => {
             println!(
-                "Error type B at Line {}: Unexpected Token {:?}.",
+                "Error type B at Line {}: Unexpected token {:?}.",
                 location.line, tok
             );
         }
@@ -123,7 +141,7 @@ fn println_err(e: &ParseError<lexer::Location, lexer::Token, lexer::LexicalError
             token: (location, tok, _),
         } => {
             println!(
-                "Error type B at Line {}: Extra Token {:?}.",
+                "Error type B at Line {}: Extra token {:?}.",
                 location.line, tok
             );
         }

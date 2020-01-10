@@ -33,8 +33,8 @@ ELSE     = { "else" }
 WHILE    = { "while" }
 
 DEC_LITERAL    = @{ "0" | ASCII_NONZERO_DIGIT ~ ASCII_DIGIT* }
-HEX_LITERAL    = @{ ^"0x" ~ ASCII_HEX_DIGIT+ }
-OCT_LITERAL    = @{ "0" ~ ASCII_OCT_DIGIT+ }
+HEX_LITERAL    = @{ ^"0x" ~ ASCII_ALPHANUMERIC+ }
+OCT_LITERAL    = @{ "0" ~ ASCII_ALPHANUMERIC+ }
 FLOAT_EXPONENT = @{ ^"e" ~ ("+" | "-")? ~ ASCII_DIGIT+ }
 
 Token =  _{ SEMI

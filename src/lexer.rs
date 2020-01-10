@@ -33,6 +33,8 @@ pub enum Token {
     FLOAT(f32),
     EOI,
     UnknownChar(char),
+    IllegalOct(String),
+    IllegalHex(String),
 }
 
 impl Token {
@@ -78,10 +80,7 @@ impl Location {
 }
 
 #[derive(Clone, Debug)]
-pub enum LexicalError {
-    InvalidInt,
-    InvalidFloat,
-}
+pub enum LexicalError {}
 
 #[derive(Parser)]
 #[grammar = "token.pest"]
@@ -121,7 +120,7 @@ impl<'input> Iterator for Lexer<'input> {
                 Rule::ID => Token::ID(p.as_str().to_owned()),
                 Rule::INT => {
                     let inner = p.into_inner().next().unwrap();
-                    Token::INT(to_int(inner))
+                    get_int(inner)
                 }
                 Rule::FLOAT => Token::FLOAT(p.as_str().parse::<f32>().unwrap()),
                 Rule::UnknownChar => {
@@ -136,11 +135,16 @@ impl<'input> Iterator for Lexer<'input> {
     }
 }
 
-fn to_int(pair: Pair<Rule>) -> i32 {
+fn get_int(pair: Pair<Rule>) -> Token {
+    let raw = pair.as_str();
     match pair.as_rule() {
-        Rule::HEX_LITERAL => i32::from_str_radix(&pair.as_str()[2..], 16).unwrap(),
-        Rule::OCT_LITERAL => i32::from_str_radix(&pair.as_str()[1..], 8).unwrap(),
-        Rule::DEC_LITERAL => i32::from_str_radix(&pair.as_str()[..], 10).unwrap(),
+        Rule::HEX_LITERAL => i32::from_str_radix(&raw[2..], 16)
+            .map(|val| Token::INT(val))
+            .unwrap_or_else(|_| Token::IllegalHex(raw.to_owned())),
+        Rule::OCT_LITERAL => i32::from_str_radix(&raw[1..], 8)
+            .map(|val| Token::INT(val))
+            .unwrap_or_else(|_| Token::IllegalOct(raw.to_owned())),
+        Rule::DEC_LITERAL => Token::INT(i32::from_str_radix(&raw[..], 10).unwrap()),
         _ => unreachable!(),
     }
 }
