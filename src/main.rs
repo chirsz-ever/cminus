@@ -133,7 +133,7 @@ fn println_err(e: &ParseError<lexer::Location, lexer::Token, lexer::LexicalError
             expected: _,
         } => {
             println!(
-                "Error type B at Line {}: Unexpected token {:?}.",
+                "Error type B at Line {}: Unexpected token \"{}\".",
                 location.line, tok
             );
         }
@@ -141,10 +141,10 @@ fn println_err(e: &ParseError<lexer::Location, lexer::Token, lexer::LexicalError
             token: (location, tok, _),
         } => {
             println!(
-                "Error type B at Line {}: Extra token {:?}.",
+                "Error type B at Line {}: Extra token \"{}\".",
                 location.line, tok
             );
         }
-        User { error: _ } => {}
+        User { error: _ } => unreachable!(),
     }
 }

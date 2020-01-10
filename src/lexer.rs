@@ -1,6 +1,7 @@
 use pest::iterators::Pair;
 use pest::Parser;
 use pest_derive::*;
+use std::fmt;
 
 #[derive(Clone, Debug)]
 pub enum Token {
@@ -64,6 +65,38 @@ impl Token {
             Rule::WHILE => Token::WHILE,
             r => panic!("{:?} is not a keyword", r),
         }
+    }
+}
+
+impl fmt::Display for Token {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        match self {
+            Token::SEMI => write!(f, ";")?,
+            Token::COMMA => write!(f, ",")?,
+            Token::ASSIGNOP => write!(f, "=")?,
+            Token::PLUS => write!(f, "+")?,
+            Token::MINUS => write!(f, "-")?,
+            Token::STAR => write!(f, "*")?,
+            Token::DIV => write!(f, "/")?,
+            Token::AND => write!(f, "&&")?,
+            Token::OR => write!(f, "||")?,
+            Token::DOT => write!(f, ".")?,
+            Token::NOT => write!(f, "!")?,
+            Token::LP => write!(f, "(")?,
+            Token::RP => write!(f, ")")?,
+            Token::LB => write!(f, "[")?,
+            Token::RB => write!(f, "]")?,
+            Token::LC => write!(f, "{{")?,
+            Token::RC => write!(f, "}}")?,
+            Token::STRUCT => write!(f, "struct")?,
+            Token::RETURN => write!(f, "return")?,
+            Token::IF => write!(f, "if")?,
+            Token::ELSE => write!(f, "else")?,
+            Token::WHILE => write!(f, "while")?,
+            Token::RELOP(relop) => write!(f, "{}", relop)?,
+            tok => write!(f, "{:?}", tok)?,
+        }
+        Ok(())
     }
 }
 
