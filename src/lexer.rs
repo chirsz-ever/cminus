@@ -32,6 +32,7 @@ pub enum Token {
     INT(i32),
     FLOAT(f32),
     EOI,
+    UnknownChar(char),
 }
 
 impl Token {
@@ -78,7 +79,6 @@ impl Location {
 
 #[derive(Clone, Debug)]
 pub enum LexicalError {
-    UnknownChar(char),
     InvalidInt,
     InvalidFloat,
 }
@@ -126,7 +126,7 @@ impl<'input> Iterator for Lexer<'input> {
                 Rule::FLOAT => Token::FLOAT(p.as_str().parse::<f32>().unwrap()),
                 Rule::UnknownChar => {
                     let c = p.as_str().chars().next().unwrap();
-                    return Err(LexicalError::UnknownChar(c));
+                    Token::UnknownChar(c)
                 }
                 Rule::EndOfInput => Token::EOI,
                 r => Token::keyword_from_rule(r),

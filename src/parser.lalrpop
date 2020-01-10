@@ -1,7 +1,8 @@
 use crate::lexer;
 use crate::ast::ASTNode;
+use lalrpop_util::ErrorRecovery;
 
-grammar;
+grammar<'input,'err>(errors: &'err mut Vec<ErrorRecovery<lexer::Location, lexer::Token, lexer::LexicalError>>);
 
 // High-level Definitions 
 
@@ -78,12 +79,20 @@ MatchedStmt: ASTNode = {
     RETURN Exp SEMI                           => ASTNode::node("Stmt", vec![<>]),
     WHILE LP Exp RP MatchedStmt               => ASTNode::node("Stmt", vec![<>]),
     IF LP Exp RP MatchedStmt ELSE MatchedStmt => ASTNode::node("Stmt", vec![<>]),
+    IF LP Exp RP <!> ELSE MatchedStmt => {
+        errors.push(<>);
+        ASTNode::node("ErrorStmt", vec![])
+    },
 };
 
 OpenStmt: ASTNode = {
     WHILE LP Exp RP OpenStmt               => ASTNode::node("Stmt", vec![<>]),
     IF LP Exp RP Stmt                      => ASTNode::node("Stmt", vec![<>]),
     IF LP Exp RP MatchedStmt ELSE OpenStmt => ASTNode::node("Stmt", vec![<>]),
+    IF LP Exp RP <!> ELSE OpenStmt => {
+        errors.push(<>);
+        ASTNode::node("ErrorStmt", vec![])
+    },
 }
 
 // Stmt: ASTNode = {
@@ -102,7 +111,13 @@ DefList: ASTNode = {
                          => ASTNode::empty(),
 };
 
-Def: ASTNode = Specifier DecList SEMI => ASTNode::node("Def", vec![<>]);
+Def: ASTNode = {
+    Specifier DecList SEMI => ASTNode::node("Def", vec![<>]),
+    Specifier <!> SEMI => {
+        errors.push(<>);
+        ASTNode::node("ErrorDef", vec![])
+    },
+};
 
 DecList: ASTNode = {
     Dec                      => ASTNode::node("DecList", vec![<>]),
@@ -179,7 +194,15 @@ AtomExp: ASTNode = {
     Atom,
     AtomExp LP RP      => ASTNode::node("Exp", vec![<>]),
     AtomExp LP Args RP => ASTNode::node("Exp", vec![<>]),
+    AtomExp LP <!>  RP => {
+        errors.push(<>);
+        ASTNode::node("ErrorAtomExp", vec![])
+    },
     AtomExp LB Exp RB  => ASTNode::node("Exp", vec![<>]),
+    AtomExp LB <!> RB => {
+        errors.push(<>);
+        ASTNode::node("ErrorAtomExp", vec![])
+    },
     AtomExp DOT ID     => ASTNode::node("Exp", vec![<>]),
 };
 
@@ -285,5 +308,6 @@ extern {
         IntLit => lexer::Token::INT(<i32>),
         FloatLit => lexer::Token::FLOAT(<f32>),
         EOI => lexer::Token::EOI,
+        UnknownChar => lexer::Token::UnknownChar(<char>),
     }
 }

@@ -39,8 +39,8 @@ FLOAT_EXPONENT = @{ ^"e" ~ ("+" | "-")? ~ ASCII_DIGIT+ }
 
 Token =  _{ SEMI
           | COMMA
-          | ASSIGNOP
           | RELOP
+          | ASSIGNOP
           | PLUS
           | MINUS
           | STAR

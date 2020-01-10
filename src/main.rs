@@ -5,8 +5,9 @@ mod ast;
 mod lexer;
 lalrpop_mod!(parser);
 
-use lexer::*;
 use ast::*;
+use lalrpop_util::ParseError;
+use lexer::*;
 use parser::ProgramParser;
 use std::env;
 use std::fs;
@@ -15,8 +16,24 @@ fn main() {
     let fname = env::args().nth(1).expect("please input source file name");
     let unparsed_src = fs::read_to_string(fname).expect("cannot read file");
     let tokens = Lexer::parse(&unparsed_src);
-    let ast = ProgramParser::new().parse(tokens).unwrap();
-    print_ast(&ast, 0);
+    let mut errors = Vec::new();
+    let result = ProgramParser::new().parse(&mut errors, tokens);
+    match result {
+        Ok(ast) if errors.is_empty() => {
+            print_ast(&ast, 0);
+        }
+        Ok(_) => {
+            for err in &errors {
+                println_err(&err.error);
+            }
+        }
+        Err(e) => {
+            for err in &errors {
+                println_err(&err.error);
+            }
+            println_err(&e);
+        }
+    }
 }
 
 fn print_ast(ast: &ASTNode, indent: usize) {
@@ -69,5 +86,47 @@ fn print_ast(ast: &ASTNode, indent: usize) {
 fn print_indent(indent: usize) {
     for _ in 0..indent {
         print!(" ");
+    }
+}
+
+fn println_err(e: &ParseError<lexer::Location, lexer::Token, lexer::LexicalError>) {
+    use ParseError::*;
+    match e {
+        InvalidToken { location } => {
+            println!("Error type B at Line {}: Invalid Token.", location.line);
+        }
+        UnrecognizedEOF {
+            location,
+            expected: _,
+        } => {
+            println!("Error type B at Line {}: Unrecognized EOF.", location.line);
+        }
+        UnrecognizedToken {
+            token: (location, Token::UnknownChar(c), _),
+            expected: _,
+        } => {
+            println!(
+                "Error type A at Line {}: Unknown Char `{}`.",
+                location.line, c
+            );
+        }
+        UnrecognizedToken {
+            token: (location, tok, _),
+            expected: _,
+        } => {
+            println!(
+                "Error type B at Line {}: Unexpected Token {:?}.",
+                location.line, tok
+            );
+        }
+        ExtraToken {
+            token: (location, tok, _),
+        } => {
+            println!(
+                "Error type B at Line {}: Extra Token {:?}.",
+                location.line, tok
+            );
+        }
+        User { error: _ } => {}
     }
 }

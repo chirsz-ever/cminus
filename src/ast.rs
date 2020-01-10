@@ -25,7 +25,10 @@ impl ASTNode {
     pub fn node(name: &'static str, children: Vec<ASTNode>) -> ASTNode {
         ASTNode {
             ident: ASTNodeIdent::Name(name),
-            location: children[0].location.clone(),
+            location: children
+                .get(0)
+                .map(|n| n.location.clone())
+                .unwrap_or_default(),
             children: Some(children),
         }
     }
