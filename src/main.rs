@@ -89,7 +89,7 @@ fn print_indent(indent: usize) {
     }
 }
 
-fn println_err(e: &ParseError<lexer::Location, lexer::Token, lexer::LexicalError>) {
+fn println_err(e: &ParseError<lexer::Location, lexer::Token<'_>, lexer::LexicalError>) {
     use ParseError::*;
     match e {
         InvalidToken { location } => {

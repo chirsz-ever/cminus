@@ -4,7 +4,7 @@ use pest_derive::*;
 use std::fmt;
 
 #[derive(Clone, Debug)]
-pub enum Token {
+pub enum Token<'input> {
     SEMI,
     COMMA,
     ASSIGNOP,
@@ -29,7 +29,7 @@ pub enum Token {
     IF,
     ELSE,
     WHILE,
-    ID(String),
+    ID(&'input str),
     INT(i32),
     FLOAT(f32),
     EOI,
@@ -38,8 +38,8 @@ pub enum Token {
     IllegalHex(String),
 }
 
-impl Token {
-    fn keyword_from_rule(r: Rule) -> Token {
+impl Token<'_> {
+    fn keyword_from_rule(r: Rule) -> Token<'static> {
         match r {
             Rule::SEMI => Token::SEMI,
             Rule::COMMA => Token::COMMA,
@@ -68,7 +68,7 @@ impl Token {
     }
 }
 
-impl fmt::Display for Token {
+impl fmt::Display for Token<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match self {
             Token::SEMI => write!(f, ";")?,
@@ -119,7 +119,7 @@ pub enum LexicalError {}
 #[grammar = "token.pest"]
 struct CMinusLexer;
 
-fn span_to_loc<'i>(span: pest::Span<'i>) -> (Location, Location) {
+fn span_to_loc(span: pest::Span<'_>) -> (Location, Location) {
     let (start, end) = span.split();
     let (line, column) = start.line_col();
     let start = Location::new(line, column);
@@ -141,7 +141,7 @@ impl Lexer<'_> {
 }
 
 impl<'input> Iterator for Lexer<'input> {
-    type Item = Result<(Location, Token, Location), LexicalError>;
+    type Item = Result<(Location, Token<'input>, Location), LexicalError>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let pair = self.inner.next();
@@ -150,7 +150,7 @@ impl<'input> Iterator for Lexer<'input> {
             let tok = match p.as_rule() {
                 Rule::RELOP => Token::RELOP(p.as_str().to_owned()),
                 Rule::TYPE => Token::TYPE(p.as_str().to_owned()),
-                Rule::ID => Token::ID(p.as_str().to_owned()),
+                Rule::ID => Token::ID(p.as_str()),
                 Rule::INT => {
                     let inner = p.into_inner().next().unwrap();
                     get_int(inner)
@@ -172,10 +172,10 @@ fn get_int(pair: Pair<Rule>) -> Token {
     let raw = pair.as_str();
     match pair.as_rule() {
         Rule::HEX_LITERAL => i32::from_str_radix(&raw[2..], 16)
-            .map(|val| Token::INT(val))
+            .map(Token::INT)
             .unwrap_or_else(|_| Token::IllegalHex(raw.to_owned())),
         Rule::OCT_LITERAL => i32::from_str_radix(&raw[1..], 8)
-            .map(|val| Token::INT(val))
+            .map(Token::INT)
             .unwrap_or_else(|_| Token::IllegalOct(raw.to_owned())),
         Rule::DEC_LITERAL => Token::INT(i32::from_str_radix(&raw[..], 10).unwrap()),
         _ => unreachable!(),

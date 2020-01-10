@@ -1,20 +1,20 @@
 use crate::lexer::{Location, Token};
 
 #[derive(Clone)]
-pub struct ASTNode {
-    pub ident: ASTNodeIdent,
+pub struct ASTNode<'input> {
+    pub ident: ASTNodeIdent<'input>,
     pub location: Location,
-    pub children: Option<Vec<ASTNode>>,
+    pub children: Option<Vec<ASTNode<'input>>>,
 }
 
 #[derive(Clone)]
-pub enum ASTNodeIdent {
+pub enum ASTNodeIdent<'input> {
     Name(&'static str),
-    Token(Token),
+    Token(Token<'input>),
 }
 
-impl ASTNode {
-    pub fn empty() -> ASTNode {
+impl<'input> ASTNode<'input> {
+    pub fn empty() -> ASTNode<'static> {
         ASTNode {
             ident: ASTNodeIdent::Name(""),
             location: Location::default(),
@@ -22,7 +22,7 @@ impl ASTNode {
         }
     }
 
-    pub fn node(name: &'static str, children: Vec<ASTNode>) -> ASTNode {
+    pub fn node(name: &'static str, children: Vec<ASTNode<'input>>) -> ASTNode<'input> {
         ASTNode {
             ident: ASTNodeIdent::Name(name),
             location: children
@@ -41,7 +41,7 @@ impl ASTNode {
         }
     }
 
-    pub fn ident(ident: String, location: Location) -> ASTNode {
+    pub fn ident(ident: &'input str, location: Location) -> ASTNode {
         ASTNode {
             ident: ASTNodeIdent::Token(Token::ID(ident)),
             location,
@@ -49,7 +49,7 @@ impl ASTNode {
         }
     }
 
-    pub fn type_name(type_name: String, location: Location) -> ASTNode {
+    pub fn type_name(type_name: String, location: Location) -> ASTNode<'input> {
         ASTNode {
             ident: ASTNodeIdent::Token(Token::TYPE(type_name)),
             location,
@@ -57,7 +57,7 @@ impl ASTNode {
         }
     }
 
-    pub fn int(value: i32, location: Location) -> ASTNode {
+    pub fn int(value: i32, location: Location) -> ASTNode<'input> {
         ASTNode {
             ident: ASTNodeIdent::Token(Token::INT(value)),
             location,
@@ -65,7 +65,7 @@ impl ASTNode {
         }
     }
 
-    pub fn float(value: f32, location: Location) -> ASTNode {
+    pub fn float(value: f32, location: Location) -> ASTNode<'input> {
         ASTNode {
             ident: ASTNodeIdent::Token(Token::FLOAT(value)),
             location,
@@ -73,7 +73,7 @@ impl ASTNode {
         }
     }
 
-    pub fn relop(relop: String, location: Location) -> ASTNode {
+    pub fn relop(relop: String, location: Location) -> ASTNode<'input> {
         ASTNode {
             ident: ASTNodeIdent::Token(Token::RELOP(relop)),
             location,
