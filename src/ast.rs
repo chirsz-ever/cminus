@@ -49,7 +49,7 @@ impl<'input> ASTNode<'input> {
         }
     }
 
-    pub fn type_name(type_name: String, location: Location) -> ASTNode<'input> {
+    pub fn type_name(type_name: &'input str, location: Location) -> ASTNode<'input> {
         ASTNode {
             ident: ASTNodeIdent::Token(Token::TYPE(type_name)),
             location,
@@ -73,7 +73,7 @@ impl<'input> ASTNode<'input> {
         }
     }
 
-    pub fn relop(relop: String, location: Location) -> ASTNode<'input> {
+    pub fn relop(relop: &'input str, location: Location) -> ASTNode<'input> {
         ASTNode {
             ident: ASTNodeIdent::Token(Token::RELOP(relop)),
             location,

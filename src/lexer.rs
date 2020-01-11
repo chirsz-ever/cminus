@@ -8,7 +8,7 @@ pub enum Token<'input> {
     SEMI,
     COMMA,
     ASSIGNOP,
-    RELOP(String),
+    RELOP(&'input str),
     PLUS,
     MINUS,
     STAR,
@@ -17,7 +17,7 @@ pub enum Token<'input> {
     OR,
     DOT,
     NOT,
-    TYPE(String),
+    TYPE(&'input str),
     LP,
     RP,
     LB,
@@ -34,8 +34,8 @@ pub enum Token<'input> {
     FLOAT(f32),
     EOI,
     UnknownChar(char),
-    IllegalOct(String),
-    IllegalHex(String),
+    IllegalOct(&'input str),
+    IllegalHex(&'input str),
 }
 
 impl Token<'_> {
@@ -148,8 +148,8 @@ impl<'input> Iterator for Lexer<'input> {
         pair.map(|p| {
             let (start, end) = span_to_loc(p.as_span());
             let tok = match p.as_rule() {
-                Rule::RELOP => Token::RELOP(p.as_str().to_owned()),
-                Rule::TYPE => Token::TYPE(p.as_str().to_owned()),
+                Rule::RELOP => Token::RELOP(p.as_str()),
+                Rule::TYPE => Token::TYPE(p.as_str()),
                 Rule::ID => Token::ID(p.as_str()),
                 Rule::INT => {
                     let inner = p.into_inner().next().unwrap();
@@ -173,10 +173,10 @@ fn get_int(pair: Pair<Rule>) -> Token {
     match pair.as_rule() {
         Rule::HEX_LITERAL => i32::from_str_radix(&raw[2..], 16)
             .map(Token::INT)
-            .unwrap_or_else(|_| Token::IllegalHex(raw.to_owned())),
+            .unwrap_or_else(|_| Token::IllegalHex(raw)),
         Rule::OCT_LITERAL => i32::from_str_radix(&raw[1..], 8)
             .map(Token::INT)
-            .unwrap_or_else(|_| Token::IllegalOct(raw.to_owned())),
+            .unwrap_or_else(|_| Token::IllegalOct(raw)),
         Rule::DEC_LITERAL => Token::INT(i32::from_str_radix(&raw[..], 10).unwrap()),
         _ => unreachable!(),
     }

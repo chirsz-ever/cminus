@@ -283,7 +283,7 @@ extern {
         ";" => lexer::Token::SEMI,
         "," => lexer::Token::COMMA,
         "=" => lexer::Token::ASSIGNOP,
-        RelopToken => lexer::Token::RELOP(<String>),
+        RelopToken => lexer::Token::RELOP(<&'input str>),
         "+" => lexer::Token::PLUS,
         "-" => lexer::Token::MINUS,
         "*" => lexer::Token::STAR,
@@ -292,7 +292,7 @@ extern {
         "||" => lexer::Token::OR,
         "." => lexer::Token::DOT,
         "!" => lexer::Token::NOT,
-        TypeToken => lexer::Token::TYPE(<String>),
+        TypeToken => lexer::Token::TYPE(<&'input str>),
         "(" => lexer::Token::LP,
         ")" => lexer::Token::RP,
         "[" => lexer::Token::LB,
@@ -309,7 +309,7 @@ extern {
         FloatLit => lexer::Token::FLOAT(<f32>),
         EOI => lexer::Token::EOI,
         UnknownChar => lexer::Token::UnknownChar(<char>),
-        IllegalOct => lexer::Token::IllegalOct(<String>),
-        IllegalHex => lexer::Token::IllegalHex(<String>),
+        IllegalOct => lexer::Token::IllegalOct(<&'input str>),
+        IllegalHex => lexer::Token::IllegalHex(<&'input str>),
     }
 }
