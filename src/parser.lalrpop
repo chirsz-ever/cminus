@@ -2,7 +2,7 @@ use crate::lexer;
 use crate::ast::ASTNode;
 use lalrpop_util::ErrorRecovery;
 
-grammar<'input,'err>(errors: &'err mut Vec<ErrorRecovery<lexer::Location, lexer::Token<'input>, lexer::LexicalError>>);
+grammar<'input>(errors: &mut Vec<ErrorRecovery<lexer::Location, lexer::Token<'input>, lexer::LexicalError>>);
 
 // High-level Definitions 
 
